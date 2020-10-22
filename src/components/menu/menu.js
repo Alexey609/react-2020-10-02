@@ -5,6 +5,16 @@ import Basket from '../basket';
 
 import styles from './menu.module.css';
 
+import { connect } from 'react-redux';
+import {
+  productsListSelector,
+  productsLoadedSelector,
+  productsLoadingSelector,
+  productLoadedId,
+} from '../../redux/selectors';
+import { loadMenu } from '../../redux/actions';
+import Loader from '../loader';
+
 class Menu extends React.Component {
   static propTypes = {
     menu: PropTypes.arrayOf(PropTypes.string.isRequired).isRequired,
@@ -16,8 +26,22 @@ class Menu extends React.Component {
     this.setState({ error });
   }
 
+  componentDidMount() {
+    const { loadMenu, loading, restaurantId, loadedId } = this.props;
+    if (!loading && !loadedId[restaurantId]) loadMenu(restaurantId);
+  }
+
+  componentDidUpdate() {
+    const { loadMenu, loading, restaurantId, loadedId } = this.props;
+    if (!loading && !loadedId[restaurantId]) loadMenu(restaurantId);
+  }
+
   render() {
-    const { menu } = this.props;
+    const { loaded, loading, menu } = this.props;
+
+    //if (!loading && !loaded) loadMenu(restaurantId);
+
+    if (loading || !loaded) return <Loader />;
 
     if (this.state.error) {
       return <p>{this.state.error.message}</p>;
@@ -38,4 +62,12 @@ class Menu extends React.Component {
   }
 }
 
-export default Menu;
+export default connect(
+  (state) => ({
+    products: productsListSelector(state),
+    loading: productsLoadingSelector(state),
+    loaded: productsLoadedSelector(state),
+    loadedId: productLoadedId(state),
+  }),
+  { loadMenu }
+)(Menu);
